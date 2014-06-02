@@ -101,7 +101,6 @@
 				},
 				processData: false,
 				success: function (data) {
-					console.log(data);
 					if(data.head.code === 200)
 					{
 						thisObj.authData = data.respone;
@@ -117,9 +116,63 @@
 	// set App namespace to the global namespace
 	this.App = App;
 
+	App.limit = 50;
+	App.offset = 0;
+
 	$(document).ready(function()
 	{
 		App.Auth.login();
+		App.API.get('https://api.diy.org/skills', {'limit': App.limit}, function(data)
+														{
+															App.skills = data.response;
+															App.buildSkills()
+														});
 	});
+
+	App.buildSkills = function()
+	{
+		$.each(App.skills, function(key, value)
+		{
+			$('.main > section').append('<span onclick="App.loadSkill(\'' + value.url + '\', \'' + value.title + '\', \'' + value.icons.small + '\')" class="grid-item">' +
+											'<img src="https:' + (value.icons.medium).replace('https:', '') + '"/>' +
+											'<span>' + value.title + '</span>' +
+										'</span>');
+		})
+
+	}
+
+	App.loadSkill = function(url, title, icon)
+	{
+		$('.main > .container').click(function(){
+			$('.main > .container').hide();
+		});
+
+		App.API.get('https://api.diy.org/skills/' + url + '/challenges', {}, function(data)
+		{
+			App.challenges = data.response;
+			App.buildChallenges(title, icon)
+		});
+	},
+
+	App.loadMore = function()
+	{
+		App.offset += App.limit;
+		App.API.get('https://api.diy.org/skills', {'limit': App.limit, 'offset': App.offset}, function(data)
+		{
+			App.skills = data.response;
+			App.buildSkills()
+		});
+	}
+
+	App.buildChallenges = function(title, icon)
+	{
+		$('.main > .container').show();
+		$('.main > .container > .dialog > .header').html('<img src="https:' + (icon).replace('https:', '') + '"/><span>' + title + '</span>');
+		$('.main > .container > .dialog > .content').html('');
+		$.each(App.challenges, function(key, value)
+		{
+			$('.main > .container  > .dialog > .content').append('<span><img src="' + value.image.web_300.url + '"/><span>' + value.title + '</span></span>');
+		})
+	};
 
 })(this)

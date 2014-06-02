@@ -12,6 +12,7 @@ body {
 	body > div.main {
 		width: 100%;
 		height: 100%;
+		position: relative;
 	}
 
 		body > div.main > header {
@@ -28,6 +29,94 @@ body {
 			width: 100%;
 		}
 
-		body > div.main > footer {
+		body > div.main > section > span.grid-item {
+			width: 150px;
+			height: 200px;
+			margin: 10px;
+			background: black;
+			border: 1px black solid;
+			border-radius: 5px;
+			display: inline-block;
+			cursor: pointer;
+		}
+
+		body > div.main > section > span.grid-item > img {
+			width: 150px;
+			height: 150px;
+			display: inline-block;
+		}
+
+		body > div.main > section > span.grid-item > span{
+			width: 150px;
+			height: 50px;
+			color: white;
+			text-align: center;
+			display: inline-block;
+		}
+
+		body > div.main > div.container{
+			position: fixed;
+			top: 0px;
+			left: 0px;
+			width: 100%;
+			height: 100%;
+			background-color:rgba(0, 0, 0, 0.25);
 			display: none;
 		}
+
+		body > div.main > div.container > div.dialog{
+			position: relative;
+			top: 100px;
+			width: 500px;
+			height: 500px;
+			margin: 0 auto;
+			background: white;
+			overflow: scroll;
+			border: 1px grey solid;
+		}
+
+		body > div.main > div.container > div.dialog > div.header {
+			height: 50px;
+			color: white;
+			background: black;
+		}
+
+		body > div.main > div.container > div.dialog > div.header > img {
+			height: 50px;
+		}
+
+		body > div.main > div.container > div.dialog > div.header > span {
+			position: absolute;
+			top: 20px;
+		}
+
+		body > div.main > div.container > div.dialog > div.content > span {
+			display: inline-flex;
+		}
+
+
+		body > div.main > div.container > div.dialog > div.content > span > img {
+			width: 75px;
+			display: inline-block;
+			height: 50px;
+		}
+
+		body > div.main > div.container > div.dialog > div.content > span > span {
+			width: 395px;
+			display: inline-block;
+			height: 20px;
+			padding: 15px;
+			border-bottom: 1px solid black;
+		}
+
+		body > div.main > footer {
+			height: 80px;
+			width: 100%;
+			text-align: center;
+			font: 18px/79px verdana;
+			color: #CCC;
+			background: #333;
+			border-bottom: 1px solid #999;
+			cursor: pointer;
+		}
+

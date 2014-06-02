@@ -1,2 +1,1 @@
-sstephens.github.io
-===================
+Code School Project
