@@ -1,178 +1,265 @@
-
-(function()
+(function(main)
 {
-	// namespace App
-	var App = {};
-
 	/**
-	 * API class localizes the $.ajax calls in one place
-	 * for easey maintanence
+	 * @class api class
+	 *
 	 *
 	 */
-	App.API = {
-
-		/**
-		 * conveinence method for get calls
-		 *
-		 * @public
-		 * @param url {string} api url
-		 * @param data {object} parameters needed for the api call
-		 * @param onSuccess {function} success callback
-		 * @param onError {function} error callback
-		 * @return {void}
-		 */
-		get: function(url, data, onSuccess, onError)
-		{
-			this._call(url, 'GET', data, onSuccess, onError);
-		},
-
-		/**
-		 * conveinence method for post calls
-		 *
-		 * @public
-		 * @param url {string} api url
-		 * @param data {object} parameters needed for the api call
-		 * @param onSuccess {function} success callback
-		 * @param onError {function} error callback
-		 * @return {void}
-		 */
-		post: function(url, data, onSuccess, onError)
-		{
-			this._call(url, 'POST', data, onSuccess, onError);
-		},
-
-		/**
-		 * wrapper method for the $.ajax calls
-		 *
-		 * @private
-		 * @param url {string} api url
-		 * @param type {string} the api method type (POST | GET)
-		 * @param data {object} parameters needed for the api call
-		 * @param onSuccess {function} success callback
-		 * @param onError {function} error callback
-		 * @return {void}
-		 */
-		_call: function(url, type, data, onSuccess, onError)
-		{
-			data = data !== undefined ? data : {};
-			onSuccess = onSuccess !== undefined ? onSuccess : function(){};
-			onError = onError !== undefined ? onError : function(){};
-
-			$.ajax(
-			{
-				url: url,
-				type: type,
-				data: data,
-				success: onSuccess,
-				error: onError
-			});
-		}
-	};
-
-	/**
-	 * Authentication class
-	 *
-	 */
-	App.Auth = {
-
-		// user name to authenticate with
-		user: 'suclimbing',
-
-		// password to authenticate with
-		password: 'Password01',
+	var api = {
 		
-		// auth data store
-		authData: null,
-
 		/**
-		 * authentication method
+		 * @property originUrl 
+		 * @type string
+		 */
+		originUrl: 'https://api.diy.org',
+	
+		/**
+		 * get api method
+		 * ajax call wrapper
 		 *
+		 * @public
+		 * @param url {string}
+		 * @param data {object}
+		 * @param onSuccess {function}
+		 * @param onError {function}
 		 * @return {void}
 		 */
-		login: function()
+		getter: function(url, data, onSuccess, onError)
 		{
-			var thisObj = this;
+			// jquery ajax method
 			$.ajax(
 			{
-				url: 'https://api.diy.org/authorize',
-				beforeSend: function(xhr) 
+				url: this.originUrl + url,
+				data: data,
+				success: function(data)
 				{
-					xhr.setRequestHeader("Authorization", "Basic " + btoa(thisObj.user + ":" + thisObj.password)); 
-				},
-				processData: false,
-				success: function (data) {
 					if(data.head.code === 200)
 					{
-						thisObj.authData = data.respone;
+						onSuccess(data.response);
+					}
+					else
+					{
+						onError(data);
 					}
 				},
-				error: function(){
-					console.log("Cannot get data", arguments);
+				error: function()
+				{
+					onError(arguments);
 				}
 			});
 		}
 	};
 
-	// set App namespace to the global namespace
-	this.App = App;
+	/**
+	 * @class skill render class
+	 *
+	 */
+	var skillsClass = {
+	
+		/**
+		 * @property offset
+		 * @type int
+		 */
+		offset: 0,
 
-	App.limit = 50;
-	App.offset = 0;
-
-	$(document).ready(function()
-	{
-		App.Auth.login();
-		App.API.get('https://api.diy.org/skills', {'limit': App.limit}, function(data)
-														{
-															App.skills = data.response;
-															App.buildSkills()
-														});
-	});
-
-	App.buildSkills = function()
-	{
-		$.each(App.skills, function(key, value)
+		/**
+		 * @property limit
+		 * @tpye int
+		 */
+		limit: 10,
+		
+		/**
+		 * load more results
+		 *
+		 * @public
+		 * @return {void}
+		 */
+		loadMore: function()
 		{
-			$('.main > section').append('<span onclick="App.loadSkill(\'' + value.url + '\', \'' + value.title + '\', \'' + value.icons.small + '\')" class="grid-item">' +
-											'<img src="https:' + (value.icons.medium).replace('https:', '') + '"/>' +
-											'<span>' + value.title + '</span>' +
-										'</span>');
-		})
-
-	}
-
-	App.loadSkill = function(url, title, icon)
-	{
-		$('.main > .container').click(function(){
-			$('.main > .container').hide();
-		});
-
-		App.API.get('https://api.diy.org/skills/' + url + '/challenges', {}, function(data)
+			this.offset += this.limit;
+			
+			this.getSkills();
+		},
+	
+		/**
+		 * render api results to DOM
+		 *
+		 * @public
+		 * @return {void}
+		 */
+		render: function(result)
 		{
-			App.challenges = data.response;
-			App.buildChallenges(title, icon)
-		});
-	},
+			var body = $('#main');
+			$.each(result, function(key, value)
+			{
+				if(result.hasOwnProperty(key)) 
+				{	
+					var icon = value.icons.small;
+					if(!(/^https/.test(icon)))
+					{
+						icon = 'https:' + icon;
+					}
+						
+					var row = $('<div class="row" data-url="' + value.url + '" ></div>');
+					var imgContainer = $('<span class="img"></span>');
+					var img = $('<img src="' + icon + '" />');
+					var textContainer = $('<span class="text"></span>');
+					var text = value.description;
+						
+					row.append(imgContainer.append(img))
+						.append(textContainer.append(text));
+							
+					body.append(row);
 
-	App.loadMore = function()
-	{
-		App.offset += App.limit;
-		App.API.get('https://api.diy.org/skills', {'limit': App.limit, 'offset': App.offset}, function(data)
+					row.bind('click', function()
+					{
+						var url = $(this).attr('data-url');
+						challengeClass.getChallenges(url);
+					});
+				}
+			});
+					
+			var loadRow = $('#load-more');
+			if(loadRow.length > 0)
+			{
+				loadRow.remove();
+			}
+					
+			loadRow = $('<div id="load-more" class="row">Load More</div>');
+					
+			body.append(loadRow);
+					
+			loadRow.bind('click', function()
+			{
+				skillsClass.loadMore();
+			});
+		},
+	
+		/**
+		 * errror callback function
+		 *
+		 * @public
+		 * @return {void}
+		 */
+		onError: function(err)
 		{
-			App.skills = data.response;
-			App.buildSkills()
-		});
-	}
+			console.log(err);
+		},
+		
+		/**
+		 * get skills
+		 *
+		 * @public
+		 * @return {void}
+		 */
+		getSkills: function()
+		{
+			var data = {
+				offset: this.offset,
+				limit: this.limit
+			};
+			
+			api.getter('/skills', data, this.render, this.onError);
+		}
+	};
+	
+	// global define
+	window.skillClass = skillsClass;
+	
+	var challengeClass = {
+		
+		/**
+		 * render api results to DOM
+		 *
+		 * @public
+		 * @return {void}
+		 */
+		render: function(result)
+		{
+			// get dialog div
+			var dialog = $('#dialog');
 
-	App.buildChallenges = function(title, icon)
-	{
-		$('.main > .container').show();
-		$('.main > .container > .dialog > .header').html('<img src="https:' + (icon).replace('https:', '') + '"/><span>' + title + '</span>');
-		$('.main > .container > .dialog > .content').html('');
-		$.each(App.challenges, function(key, value)
+			// creates a dialog container to go inside the dialog
+			var container = $('<div class="container"></div>');
+
+			// loop over each result
+			$.each(result, function(key, value)
+			{
+				// make sure the array key is a valid entry
+				if(result.hasOwnProperty(key))
+				{
+					// get the image url and ensure it has https on it
+					var icon = value.image.web_300.url;
+					if(!(/^https/.test(icon)))
+					{
+						icon = 'https:' + icon;
+					}
+
+					// build the row for a challenge object
+					var row = $('<div class="row"></div>');
+					var imgContainer = $('<span class="img"></span>');
+					var img = $('<img src="' + icon + '" />');
+					var textContainer = $('<span class="text"></span>');
+					var text = value.description;
+
+					// append it to the container
+					row.append(imgContainer.append(img))
+						.append(textContainer.append(text));
+					container.append(row);
+				}
+			});
+
+			// add the container to the dialog
+			dialog.html(container).addClass('active');
+
+			// stop the clicks on the dialog from
+			// closing the dialog
+			container.click(function()
+			{
+				return false;
+			});
+
+			// close the dialog when clicked outside the container
+			dialog.bind('click.close-dialog', function()
+			{
+				dialog.removeClass('active').unbind('click.close-dialog');
+			});
+		},
+
+		/**
+		 * errror callback function
+		 *
+		 * @public
+		 * @return {void}
+		 */
+		onError: function(result)
 		{
-			$('.main > .container  > .dialog > .content').append('<span><img src="' + value.image.web_300.url + '"/><span>' + value.title + '</span></span>');
-		})
+			console.log(result);
+		},
+
+		/**
+		 * get challenges
+		 *
+		 * @public
+		 * @param {url}
+		 * @return {void}
+		 */
+		getChallenges: function(url)
+		{
+			var data = {
+				offset: this.offset,
+				limit: this.limit
+			};
+			
+			api.getter('/skills/' + url + '/challenges' , data, this.render, this.onError);
+		}
 	};
 
-})(this)
+	// document ready callback
+	$(document).ready(function()
+	{
+		// start app
+		skillsClass.getSkills();
+	});
+
+})(window);
